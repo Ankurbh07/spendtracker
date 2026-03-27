@@ -57,7 +57,7 @@ second line teal ("Know where it goes.")
 traffic light dots in top-left, 3 stat cards in a row,
 category bar chart below
 
-git commit -m "landing: redesign hero section to match mockup”
+git commit -m "landing: redesign hero section to match mockup"
 
 Add a modal to templates/landing.html that opens when the user clicks
 "See how it works".
