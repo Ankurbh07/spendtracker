@@ -1,7 +1,10 @@
-from flask import Flask, render_template
-from database.db import init_db, seed_db
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, session
+from database.db import init_db, seed_db, create_user
+from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
+app.secret_key = "spendly-dev-secret"
 
 with app.app_context():
     init_db()
@@ -17,9 +20,39 @@ def landing():
     return render_template("landing.html")
 
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    if request.method == "GET":
+        return render_template("register.html")
+
+    name     = request.form.get("name",     "").strip()
+    email    = request.form.get("email",    "").strip()
+    password = request.form.get("password", "")
+
+    if not name or len(name) > 100:
+        return render_template("register.html",
+                               error="Full name is required (max 100 characters).",
+                               name=name, email=email)
+
+    if not email or "@" not in email:
+        return render_template("register.html",
+                               error="A valid email address is required.",
+                               name=name, email=email)
+
+    if len(password) < 8:
+        return render_template("register.html",
+                               error="Password must be at least 8 characters.",
+                               name=name, email=email)
+
+    try:
+        user_id = create_user(name, email, generate_password_hash(password))
+    except sqlite3.IntegrityError:
+        return render_template("register.html",
+                               error="An account with that email already exists.",
+                               name=name, email=email)
+
+    session["user_id"] = user_id
+    return redirect(url_for("login"))
 
 
 @app.route("/login")
@@ -40,6 +73,11 @@ def privacy():
 # ------------------------------------------------------------------ #
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
+
+@app.route("/dashboard")
+def dashboard():
+    return "Dashboard — coming in Step 5"
+
 
 @app.route("/logout")
 def logout():
